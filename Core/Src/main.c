@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include<stdbool.h>
+#include "Useful.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -45,8 +46,9 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 char oldKeyPressed = '\0';
 char keyPressed = '\0';
-char[6] password = "123456";
+char password[6] = "122455";
 const int nbDigitsPassword = 6;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -150,6 +152,17 @@ char get_digicode_key()
 	return NULL;
 
 }
+
+void WriteLog(char* logMessage)
+{
+    FILE* file = NULL;
+    file = fopen("Log.txt", "w+");
+    if(file != NULL)
+    {
+
+      fputs(logMessage, file);
+    }
+}
 /* USER CODE END 0 */
 
 /**
@@ -191,77 +204,79 @@ int main(void)
   bool isOpen = false;
   bool isChangingPassword = false;
   char closeChar = 'A';
-  char changePasswordChar = '#';
-  char[6] currentPassword = "ZZZZZZ";
+  char changePasswordChar = 'D';
+  char currentPassword[6] = "ZZZZZZ";
+  HAL_Delay(500);
   while (1)
   {
-	  char c = get_digicode_key();
-	  if(c != NULL)
-		  HAL_UART_Transmit(&huart2, &c, sizeof(c), 1000);
-	  
-	  //begin Léonard's code
-	  if(!isOpen)
-	  {
-		  if(c != NULL)
-		  {
-			  currentPassword[passwordIndex] = c;
-			  passwordIndex++;
-			  if(passwordIndex >= nbDigitsPassword)
-			  {
-				  //on vérif que le mdr est le bon
-				  bool isGoodPassword = true;
-				  for(int i = 0; i < nbDigitsPassword; i++)
-				  {
-					  if(password[i] != currentPassword[i])
-					  {
-						  isGoodPassword = false;
-						  break;
-					  }
-				  }
-				  if(isGoodPassword)
-				  {
-					  //ON ouvre la porte
-					  HAL_UART_Transmit(&huart2, "Code bon\n", sizeof("Code bon\n"), 1000);
-					  isOpen = true;
-				  }
-				  else
-				  {
-					  //Code erroré, allumé la led rouge
-					  HAL_UART_Transmit(&huart2, "Code errone\n", sizeof("Code errone\n"), 1000);
-				  }
-				  passwordIndex = 0;
-			  }
-		  }
-	  }
-	  else//Porte ouverte
-	  {
-		  if(c != NULL)
-		  {
-			  if(c == changePasswordChar)
-			  {
-				  isChangingPassword = true;
-			  }
-			  else if(c == closeChar)
-			  {
-				  HAL_UART_Transmit(&huart2, "Fermeture de porte\n", sizeof("Fermeture de porte\n"), 1000);
-				  isOpen = false;
-				  isChangingPassword = false;
-			  }
-			  else if(isChangingPassword)
-			  {
-				  password[passwordIndex] = c;
-				  passwordIndex++;
-				  if(passwordIndex >= nbDigitsPassword)
-				  {
-					  HAL_UART_Transmit(&huart2, "mdp change\n", sizeof("mdp change\n"), 1000);
-					  isChangingPassword = false;
-					  passwordIndex = 0;
-				  }
-			  }
-		  }	  
-	  }
-
-	  
+	char c = get_digicode_key();
+	if(c != NULL)
+	  HAL_UART_Transmit(&huart2, &c, sizeof(c), 1000);
+	 
+	   //begin Léonard's code
+	   if(!isOpen)
+	   {
+			if(c != NULL)
+			{
+				currentPassword[passwordIndex] = c;
+				passwordIndex++;
+				if(passwordIndex >= nbDigitsPassword)
+			    {
+					//on vérif que le mdr est le bon
+					bool isGoodPassword = true;
+					for(int i = 0; i < nbDigitsPassword; i++)
+					{
+						if(password[i] != currentPassword[i])
+						{
+							isGoodPassword = false;
+							break;
+						}
+				 	}
+					if(isGoodPassword)
+					{
+						//ON ouvre la porte
+						HAL_UART_Transmit(&huart2, "Code bon\n", sizeof("Code bon\n"), 1000);
+						isOpen = true;
+					}
+					else
+					{
+						//Code erroré, allumé la led rouge
+						HAL_UART_Transmit(&huart2, "Code errone\n", sizeof("Code errone\n"), 1000);
+						char* mess = strcat("Password Error : ", currentPassword);
+						WriteLog(mess);
+					}
+					passwordIndex = 0;
+				}
+			}
+		}
+		else//Porte ouverte
+		{
+			if(c != NULL)
+			{
+				if(c == changePasswordChar && !isChangingPassword)
+				{
+					HAL_UART_Transmit(&huart2, "En attente du nouveau mdp\n", sizeof("En attente du nouveau mdp\n"), 1000);
+					isChangingPassword = true;
+				}
+				else if(c == closeChar)
+				{
+					HAL_UART_Transmit(&huart2, "Fermeture de porte\n", sizeof("Fermeture de porte\n"), 1000);
+					isOpen = false;
+					isChangingPassword = false;
+				}
+				else if(isChangingPassword)
+				{
+					password[passwordIndex] = c;
+					passwordIndex++;
+					if(passwordIndex >= nbDigitsPassword)
+					{
+						HAL_UART_Transmit(&huart2, "mdp change\n", sizeof("mdp change\n"), 1000);
+						isChangingPassword = false;
+						passwordIndex = 0;
+					}
+				}
+			}	  
+		}
 	  //end Léonard's code
 	  
     /* USER CODE END WHILE */
