@@ -21,7 +21,7 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -39,6 +39,8 @@
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+CAN_HandleTypeDef hcan1;
+
 RTC_HandleTypeDef hrtc;
 
 UART_HandleTypeDef huart4;
@@ -50,6 +52,13 @@ char keyPressed = '\0';
 char password[6] = "122455";
 const int nbDigitsPassword = 6;
 
+//bus CAN
+CAN_TxHeaderTypeDef   TxHeader;
+CAN_RxHeaderTypeDef   RxHeader;
+uint8_t               TxData[8];
+uint8_t               RxData[8];
+uint32_t              TxMailbox;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -58,6 +67,7 @@ static void MX_GPIO_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_RTC_Init(void);
 static void MX_UART4_Init(void);
+static void MX_CAN1_Init(void);
 /* USER CODE BEGIN PFP */
 char digicode_read();
 char get_digicode_key();
@@ -153,7 +163,6 @@ char get_digicode_key()
 	}
 	oldKeyPressed = keyPressed;
 	return NULL;
-
 }
 
 void WriteLog(char* logMessage)
@@ -165,6 +174,24 @@ void WriteLog(char* logMessage)
 
       fputs(logMessage, file);
     }
+}
+
+bool CAN_Transmit(uint32_t addr, uint32_t data_size, uint8_t * tab_data)
+{
+    if(data_size > 8 || sizeof(tab_data) / sizeof(tab_data[0]) <= data_size)
+    	return false;
+
+    TxHeader.StdId = addr;
+    TxHeader.DLC = data_size;
+
+    for(int i = 0; i < data_size; i++)
+    {
+	TxData[i] = tab_data[i];
+    }
+
+    HAL_CAN_AddTxMessage(&hcan1, &TxHeader, TxData, &TxMailbox);
+
+    return true;
 }
 /* USER CODE END 0 */
 
@@ -199,6 +226,7 @@ int main(void)
   MX_USART2_UART_Init();
   MX_RTC_Init();
   MX_UART4_Init();
+  MX_CAN1_Init();
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
@@ -227,7 +255,7 @@ int main(void)
 				passwordIndex++;
 				if(passwordIndex >= nbDigitsPassword)
 			    {
-					//on vérif que le mdr est le bon
+					//on vérif que le mdp est le bon
 					bool isGoodPassword = true;
 					for(int i = 0; i < nbDigitsPassword; i++)
 					{
@@ -282,6 +310,17 @@ int main(void)
 				}
 			}	  
 		}
+	    // La transmision de mess avec le bus CAN
+	    if(HAL_CAN_GetRxFifoFillLevel(&hcan1, CAN_RX_FIFO0) > 0)
+	    {
+	    	HAL_CAN_GetRxMessage(&hcan1, CAN_RX_FIFO0, &RxHeader, RxData);
+	   	    if (RxHeader.IDE == CAN_ID_STD && RxHeader.DLC == 1 && RxData[0] == 4)
+	        {
+	   	    	// Traitement des données
+	     	}
+	    }
+
+
 	  //end Léonard's code
 	  
     /* USER CODE END WHILE */
@@ -338,6 +377,43 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief CAN1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_CAN1_Init(void)
+{
+
+  /* USER CODE BEGIN CAN1_Init 0 */
+
+  /* USER CODE END CAN1_Init 0 */
+
+  /* USER CODE BEGIN CAN1_Init 1 */
+
+  /* USER CODE END CAN1_Init 1 */
+  hcan1.Instance = CAN1;
+  hcan1.Init.Prescaler = 16;
+  hcan1.Init.Mode = CAN_MODE_NORMAL;
+  hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
+  hcan1.Init.TimeSeg1 = CAN_BS1_1TQ;
+  hcan1.Init.TimeSeg2 = CAN_BS2_1TQ;
+  hcan1.Init.TimeTriggeredMode = DISABLE;
+  hcan1.Init.AutoBusOff = DISABLE;
+  hcan1.Init.AutoWakeUp = DISABLE;
+  hcan1.Init.AutoRetransmission = DISABLE;
+  hcan1.Init.ReceiveFifoLocked = DISABLE;
+  hcan1.Init.TransmitFifoPriority = DISABLE;
+  if (HAL_CAN_Init(&hcan1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN CAN1_Init 2 */
+
+  /* USER CODE END CAN1_Init 2 */
+
 }
 
 /**
