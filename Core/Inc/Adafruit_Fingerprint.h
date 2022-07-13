@@ -167,7 +167,7 @@ public:
 #if defined(__AVR__) || defined(ESP8266) || defined(FREEDOM_E300_HIFIVE1)
   //Adafruit_Fingerprint(SoftwareSerial *ss, uint32_t password = 0x0);
 #endif
-  Adafruit_Fingerprint(UART_HandleTypeDef *hs, uint32_t password = 0x0);
+  Adafruit_Fingerprint(UART_HandleTypeDef *hs, UART_HandleTypeDef *ds , uint32_t password = 0x0);
   Adafruit_Fingerprint(Stream *serial, uint32_t password = 0x0);
 
   void begin(uint32_t baud);
@@ -229,6 +229,7 @@ private:
   SoftwareSerial *swSerial;
 #endif
   UART_HandleTypeDef *hwSerial;
+  UART_HandleTypeDef *debugSerial;
 };
 
 #endif /* INC_ADAFRUIT_FINGERPRINT_H_ */

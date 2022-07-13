@@ -35,7 +35,7 @@
 
 #include "Adafruit_Fingerprint.h"
 
-//#define FINGERPRINT_DEBUG
+#define FINGERPRINT_DEBUG
 
 /*!
  * @brief Gets the command packet
@@ -88,7 +88,7 @@ Adafruit_Fingerprint::Adafruit_Fingerprint(SoftwareSerial *ss,
 
 */
 /**************************************************************************/
-Adafruit_Fingerprint::Adafruit_Fingerprint(UART_HandleTypeDef *hs,
+Adafruit_Fingerprint::Adafruit_Fingerprint(UART_HandleTypeDef *hs, UART_HandleTypeDef *ds,
                                            uint32_t password) {
   thePassword = password;
   theAddress = 0xFFFFFFFF;
@@ -98,6 +98,7 @@ Adafruit_Fingerprint::Adafruit_Fingerprint(UART_HandleTypeDef *hs,
 #endif
   hwSerial = hs;
   mySerial = hwSerial;
+  debugSerial = ds;
 }
 
 /**************************************************************************/
@@ -489,20 +490,51 @@ uint8_t Adafruit_Fingerprint::setPacketSize(uint8_t size) {
 void Adafruit_Fingerprint::writeStructuredPacket(
     const Adafruit_Fingerprint_Packet &packet) {
 
-  mySerial->write((uint8_t)(packet.start_code >> 8));
+
+	HAL_UART_Transmit(hwSerial, (uint8_t)(packet.start_code >> 8), sizeof(uint8_t), 1000);
+	HAL_UART_Transmit(hwSerial, (uint8_t)(packet.start_code & 0xFF), sizeof(uint8_t), 1000);
+	HAL_UART_Transmit(hwSerial, (packet.address[0]), sizeof(packet.address[0]), 1000);
+	HAL_UART_Transmit(hwSerial, (packet.address[1]), sizeof(packet.address[1]), 1000);
+	HAL_UART_Transmit(hwSerial, (packet.address[2]), sizeof(packet.address[2]), 1000);
+	HAL_UART_Transmit(hwSerial, (packet.address[3]), sizeof(packet.address[3]), 1000);
+	HAL_UART_Transmit(hwSerial, packet.type, sizeof(packet.type), 1000);
+/*  mySerial->write((uint8_t)(packet.start_code >> 8));
   mySerial->write((uint8_t)(packet.start_code & 0xFF));
   mySerial->write(packet.address[0]);
   mySerial->write(packet.address[1]);
   mySerial->write(packet.address[2]);
   mySerial->write(packet.address[3]);
-  mySerial->write(packet.type);
+  mySerial->write(packet.type);*/
 
   uint16_t wire_length = packet.length + 2;
-  mySerial->write((uint8_t)(wire_length >> 8));
-  mySerial->write((uint8_t)(wire_length & 0xFF));
+
+  HAL_UART_Transmit(hwSerial, (uint8_t)(wire_length >> 8), sizeof(uint8_t), 1000);
+  HAL_UART_Transmit(hwSerial, (uint8_t)(wire_length & 0xFF), sizeof(uint8_t), 1000);
+/*  mySerial->write((uint8_t)(wire_length >> 8));
+  mySerial->write((uint8_t)(wire_length & 0xFF));*/
 
 #ifdef FINGERPRINT_DEBUG
-  Serial.print("-> 0x");
+
+  HAL_UART_Transmit(debugSerial, "-> ", sizeof("-> "), 1000);
+  HAL_UART_Transmit(debugSerial, (uint8_t)(packet.start_code >> 8), sizeof(uint8_t), 1000);
+  HAL_UART_Transmit(debugSerial, ", ", sizeof(", "), 1000);
+  HAL_UART_Transmit(debugSerial, (uint8_t)(packet.start_code & 0xFF), sizeof(uint8_t), 1000);
+  HAL_UART_Transmit(debugSerial, ", ", sizeof(", "), 1000);
+  HAL_UART_Transmit(debugSerial, packet.address[0], sizeof(packet.address[0]), 1000);
+  HAL_UART_Transmit(debugSerial, ", ", sizeof(", "), 1000);
+  HAL_UART_Transmit(debugSerial, packet.address[1], sizeof(packet.address[1]), 1000);
+  HAL_UART_Transmit(debugSerial, ", ", sizeof(", "), 1000);
+  HAL_UART_Transmit(debugSerial, packet.address[2], sizeof(packet.address[2]), 1000);
+  HAL_UART_Transmit(debugSerial, ", ", sizeof(", "), 1000);
+  HAL_UART_Transmit(debugSerial, packet.address[3], sizeof(packet.address[3]), 1000);
+  HAL_UART_Transmit(debugSerial, ", ", sizeof(", "), 1000);
+  HAL_UART_Transmit(debugSerial, packet.type, sizeof(packet.type), 1000);
+  HAL_UART_Transmit(debugSerial, ", ", sizeof(", "), 1000);
+  HAL_UART_Transmit(debugSerial, (uint8_t)(wire_length >> 8), sizeof(uint8_t), 1000);
+  HAL_UART_Transmit(debugSerial, ", ", sizeof(", "), 1000);
+  HAL_UART_Transmit(debugSerial, (uint8_t)(wire_length & 0xFF), sizeof(uint8_t), 1000);
+
+/*Serial.print("-> 0x");
   Serial.print((uint8_t)(packet.start_code >> 8), HEX);
   Serial.print(", 0x");
   Serial.print((uint8_t)(packet.start_code & 0xFF), HEX);
@@ -519,27 +551,38 @@ void Adafruit_Fingerprint::writeStructuredPacket(
   Serial.print(", 0x");
   Serial.print((uint8_t)(wire_length >> 8), HEX);
   Serial.print(", 0x");
-  Serial.print((uint8_t)(wire_length & 0xFF), HEX);
+  Serial.print((uint8_t)(wire_length & 0xFF), HEX);*/
 #endif
 
   uint16_t sum = ((wire_length) >> 8) + ((wire_length)&0xFF) + packet.type;
   for (uint8_t i = 0; i < packet.length; i++) {
-    mySerial->write(packet.data[i]);
+
+	HAL_UART_Transmit(hwSerial, packet.data[i], sizeof(packet.data[i]), 1000);
+    //mySerial->write(packet.data[i]);
     sum += packet.data[i];
 #ifdef FINGERPRINT_DEBUG
-    Serial.print(", 0x");
-    Serial.print(packet.data[i], HEX);
+    HAL_UART_Transmit(debugSerial, ", ", sizeof(", "), 1000);
+    HAL_UART_Transmit(debugSerial, packet.data[i], sizeof(packet.data[i]), 1000);
+    /*Serial.print(", 0x");
+    Serial.print(packet.data[i], HEX);*/
 #endif
   }
 
-  mySerial->write((uint8_t)(sum >> 8));
-  mySerial->write((uint8_t)(sum & 0xFF));
+  HAL_UART_Transmit(hwSerial, (uint8_t)(sum >> 8), sizeof(uint8_t), 1000);
+  HAL_UART_Transmit(hwSerial, (uint8_t)(sum & 0xFF), sizeof(uint8_t), 1000);
+  /*mySerial->write((uint8_t)(sum >> 8));
+  mySerial->write((uint8_t)(sum & 0xFF));*/
 
 #ifdef FINGERPRINT_DEBUG
-  Serial.print(", 0x");
+
+  HAL_UART_Transmit(debugSerial, ", ", sizeof(", "), 1000);
+  HAL_UART_Transmit(debugSerial, (uint8_t)(sum >> 8), sizeof(uint8_t), 1000);
+  HAL_UART_Transmit(debugSerial, ", ", sizeof(", "), 1000);
+  HAL_UART_Transmit(debugSerial, (uint8_t)(sum & 0xFF), sizeof(uint8_t), 1000);
+  /*Serial.print(", 0x");
   Serial.print((uint8_t)(sum >> 8), HEX);
   Serial.print(", 0x");
-  Serial.println((uint8_t)(sum & 0xFF), HEX);
+  Serial.println((uint8_t)(sum & 0xFF), HEX);*/
 #endif
 
   return;
@@ -557,31 +600,44 @@ void Adafruit_Fingerprint::writeStructuredPacket(
 */
 /**************************************************************************/
 uint8_t
-Adafruit_Fingerprint::getStructuredPacket(Adafruit_Fingerprint_Packet *packet,
+Adafruit_Fingerprint::getStructuredPacket(
+		Adafruit_Fingerprint_Packet *packet,
                                           uint16_t timeout) {
   uint8_t byte;
   uint16_t idx = 0, timer = 0;
 
 #ifdef FINGERPRINT_DEBUG
-  Serial.print("<- ");
+
+  HAL_UART_Transmit(debugSerial, "<- ", sizeof("<- "), 1000);
+  //Serial.print("<- ");
 #endif
 
   while (true) {
-    while (!mySerial->available()) {
+
+    /*while (!mySerial->available()) {
       delay(1);
       timer++;
-      if (timer >= timeout) {
+      if (timer >= timeout) {*/
+	  if(HAL_UART_Receive(hwSerial, &byte, sizeof(uint8_t), 5000) == HAL_TIMEOUT)
+	  {
+
+
 #ifdef FINGERPRINT_DEBUG
-        Serial.println("Timed out");
+		HAL_UART_Transmit(debugSerial, "Timed out", sizeof("Timed out"), 1000);
+        //Serial.println("Timed out");
 #endif
         return FINGERPRINT_TIMEOUT;
       }
-    }
-    byte = mySerial->read();
+    //}
+    //byte = mySerial->read();
 #ifdef FINGERPRINT_DEBUG
-    Serial.print("0x");
+
+	HAL_UART_Transmit(debugSerial, "\nData : ", sizeof("\nData : "), 1000);
+	HAL_UART_Transmit(debugSerial, byte, sizeof(uint8_t), 1000);
+	HAL_UART_Transmit(debugSerial, ", ", sizeof(", "), 1000);
+    /*Serial.print("0x");
     Serial.print(byte, HEX);
-    Serial.print(", ");
+    Serial.print(", ");*/
 #endif
     switch (idx) {
     case 0:
@@ -613,7 +669,8 @@ Adafruit_Fingerprint::getStructuredPacket(Adafruit_Fingerprint_Packet *packet,
       packet->data[idx - 9] = byte;
       if ((idx - 8) == packet->length) {
 #ifdef FINGERPRINT_DEBUG
-        Serial.println(" OK ");
+    	HAL_UART_Transmit(debugSerial, " OK ", sizeof(" OK "), 1000);
+        //Serial.println(" OK ");
 #endif
         return FINGERPRINT_OK;
       }
