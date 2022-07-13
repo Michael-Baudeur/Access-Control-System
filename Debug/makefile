@@ -49,34 +49,34 @@ $(wildcard ../makefile.init) \
 $(wildcard ../makefile.targets) \
 
 
-BUILD_ARTIFACT_NAME := Access_Control_System
+BUILD_ARTIFACT_NAME := Access-Control-System
 BUILD_ARTIFACT_EXTENSION := elf
 BUILD_ARTIFACT_PREFIX :=
 BUILD_ARTIFACT := $(BUILD_ARTIFACT_PREFIX)$(BUILD_ARTIFACT_NAME)$(if $(BUILD_ARTIFACT_EXTENSION),.$(BUILD_ARTIFACT_EXTENSION),)
 
 # Add inputs and outputs from these tool invocations to the build variables 
 EXECUTABLES += \
-Access_Control_System.elf \
+Access-Control-System.elf \
 
 MAP_FILES += \
-Access_Control_System.map \
+Access-Control-System.map \
 
 SIZE_OUTPUT += \
 default.size.stdout \
 
 OBJDUMP_LIST += \
-Access_Control_System.list \
+Access-Control-System.list \
 
 
 # All Target
 all: main-build
 
 # Main-build Target
-main-build: Access_Control_System.elf secondary-outputs
+main-build: Access-Control-System.elf secondary-outputs
 
 # Tool invocations
-Access_Control_System.elf Access_Control_System.map: $(OBJS) $(USER_OBJS) C:\Users\micha\STM32CubeIDE\workspace_1.10.0\Access_Control_System\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-g++ -o "Access_Control_System.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\micha\STM32CubeIDE\workspace_1.10.0\Access_Control_System\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Access_Control_System.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+Access-Control-System.elf Access-Control-System.map: $(OBJS) $(USER_OBJS) C:\Users\micha\STM32CubeIDE\workspace_1.10.0\Access-Control-System\STM32F446RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-g++ -o "Access-Control-System.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\micha\STM32CubeIDE\workspace_1.10.0\Access-Control-System\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="Access-Control-System.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
@@ -85,14 +85,14 @@ default.size.stdout: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
 	@echo 'Finished building: $@'
 	@echo ' '
 
-Access_Control_System.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Access_Control_System.list"
+Access-Control-System.list: $(EXECUTABLES) makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-objdump -h -S $(EXECUTABLES) > "Access-Control-System.list"
 	@echo 'Finished building: $@'
 	@echo ' '
 
 # Other Targets
 clean:
-	-$(RM) Access_Control_System.elf Access_Control_System.list Access_Control_System.map default.size.stdout
+	-$(RM) Access-Control-System.elf Access-Control-System.list Access-Control-System.map default.size.stdout
 	-@echo ' '
 
 secondary-outputs: $(SIZE_OUTPUT) $(OBJDUMP_LIST)
