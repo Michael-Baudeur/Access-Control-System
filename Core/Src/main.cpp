@@ -78,6 +78,9 @@ void CloseLock();
 void EnableGreenLedAndBuzzer(int duration, bool errorSound);
 void EnableRedLedAndBuzzer(int duration, bool errorSound);
 void WriteOnSreen(char* msg);
+bool SendDataFrame(char* data);
+char* GetTime();
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -199,6 +202,18 @@ void WriteOnScreen(char* msg)
 	//clean the screen and write the new message in param
 }
 
+bool SendDataFrame(char* data)
+{
+
+	return false;//to rm
+}
+
+char* GetTime()
+{
+
+	return "today";//to rm
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -272,9 +287,14 @@ int main(void)
 					HAL_UART_Transmit(&huart2, "Code bon\n", sizeof("Code bon\n"), 1000);
 					currentScreenMsg = "Code bon\n";
 					WriteOnScreen(currentScreenMsg);
-					//On ouvre la porte
-					OpenLock();
+					OpenLock();//On ouvre la porte
 					isOpen = true;
+
+					//Sending data frame
+					char* logMsg = strcat(GetTime(), " : ");
+					logMsg = strcat(logMsg, "Open the door.");
+					SendDataFrame(logMsg);
+
 					EnableGreenLedAndBuzzer(3000, false);
 				}
 				else
@@ -282,6 +302,14 @@ int main(void)
 					HAL_UART_Transmit(&huart2, "Code errone\n", sizeof("Code errone\n"), 1000);
 					//Code errone, on l'affiche sur l'écran.
 					WriteOnScreen("Code Errone!");
+
+					//Sending data frame
+					char* logMsg = strcat(GetTime(), " : ");
+					logMsg = strcat(logMsg, "Trying open the door with a wrong password : ");
+					logMsg = strcat(logMsg, currentPassword);
+					logMsg = strcat(logMsg, ".");
+					SendDataFrame(logMsg);
+
 					//Code erroré, allumé la led rouge pendant 300ms
 					EnableRedLedAndBuzzer(300, true);
 					//On attend 1 sec puis on recommence l'écriture du mdp
@@ -315,6 +343,12 @@ int main(void)
 					CloseLock();
 					isOpen = false;
 					isChangingPassword = false;
+
+					//Sending data frame
+					char* logMsg = strcat(GetTime(), " : ");
+					logMsg = strcat(logMsg, "Door closed.");
+					SendDataFrame(logMsg);
+
 					currentScreenMsg = "Door closed";
 					WriteOnScreen(currentScreenMsg);
 				    HAL_Delay(2000);
@@ -333,6 +367,12 @@ int main(void)
 						HAL_UART_Transmit(&huart2, "mdp change\n", sizeof("mdp change\n"), 1000);
 						isChangingPassword = false;
 						passwordIndex = 0;
+
+						//Sending data frame
+						char* logMsg = strcat(GetTime(), " : ");
+						logMsg = strcat(logMsg, "Password changed.");
+						SendDataFrame(logMsg);
+
 						currentScreenMsg = "Password changed";
 						WriteOnScreen(currentScreenMsg);
 						HAL_Delay(1000);
